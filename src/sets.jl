@@ -24,3 +24,8 @@ struct HarSet <: AbstractHarSet
         new(name, data)
     end
 end
+
+name(x::HarSet) = x.name
+data(x::HarSet) = x.data
+
+DataFrames.DataFrame(x::HarSet) = DataFrames.DataFrame([data(x)], [name(x)])

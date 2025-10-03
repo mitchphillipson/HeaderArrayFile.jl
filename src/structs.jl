@@ -56,6 +56,10 @@ header(x::HarRecord) = x.header
 metadata(x::HarRecord) = x.metadata
 data(x::HarRecord) = x.data
 
+description(x::HarRecord) = description(metadata(x))
+name(x::HarRecord) = name(header(x))
+DataFrames.DataFrame(x::HarRecord) = DataFrames.DataFrame(data(x))
+
 
 struct HarFile
     records::OrderedDict{String, HarRecord}
