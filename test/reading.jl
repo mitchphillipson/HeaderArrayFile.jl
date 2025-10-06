@@ -4,7 +4,7 @@
     using DataFrames
     using NamedArrays
 
-    X = HeaderArrayFile.File(joinpath("data", "gsdemiss.har"))
+    X = HeaderArrayFile.File(joinpath(@__DIR__, "data", "gsdemiss.har"))
 
     FC_data = ["coa", "oil", "gas", "p_c", "gdt"]
     FC_na = NamedArray(FC_data)
