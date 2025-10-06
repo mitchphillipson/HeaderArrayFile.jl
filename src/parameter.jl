@@ -121,13 +121,9 @@ function index_to_elements(X::HarParameter, i::Integer)
 
     out = []
     for (col_num, (column, N)) in enumerate(zip(column_names(X), col_lengths))
-        index = i%N + (col_num == 1 ? 0 : 1)
-        if col_num == 1 && index ==0 
-            index = N
-        end
-        i = div(i, N)
+        index = i%N == 0 ? N : i%N
+        i = div(i-1, N) + 1
         push!(out, column_values(X, column)[index])
-
     end
 
     return out
