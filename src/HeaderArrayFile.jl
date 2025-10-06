@@ -2,6 +2,8 @@ module HeaderArrayFile
 
     using DataFrames
 
+    using NamedArrays
+
     import OrderedCollections: OrderedDict
 
     include("structs.jl")

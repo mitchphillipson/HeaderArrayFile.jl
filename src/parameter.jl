@@ -26,6 +26,7 @@ name(x::HarParameter) = x.name
 column_names(x::HarParameter) = x.column_names
 column_values(x::HarParameter) = x.column_values
 column_values(x::HarParameter, col::Symbol) = getfield(column_values(x), col)
+dimension_sizes(x::HarParameter) = length.(column_values.(Ref(x), column_names(x)))
 data(x::HarParameter) = x.data
 
 function read_RE_metadata(file::IOStream, metadata::HarMetadata)
@@ -146,6 +147,17 @@ function DataFrames.DataFrame(C::HarParameter)
             :index => ByRow(i -> index_to_elements(C, i)) => cols
         ) |>
         x -> select!(x, [cols..., :value])
+end
 
+function NamedArrays.NamedArray(C::HarParameter)
+    x = C.data
+    dim_sizes = dimension_sizes(C)
+    N = prod(dim_sizes)
+    missing_index = setdiff(1:N, get.(x, 1, 0))
+    y = [x; collect(zip(missing_index, zeros(Float32, length(missing_index))))]
+    sort!(y)
 
+    dims = length.(column_values.(Ref(C), column_names(C)))
+    dim_names = Tuple(column_values.(Ref(C), column_names(C)))
+    reshape(get.(y, 2, 0), Tuple(dims)) |> x -> NamedArray(x, Tuple(dim_names), Tuple(column_names(C)))
 end

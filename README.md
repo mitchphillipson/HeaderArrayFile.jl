@@ -16,12 +16,14 @@ using HeaderArrayFiles
 const HAR = HeaderArrayFiles # Create alias for convenience
 
 using DataFrames
+using NamedArrays
 
 X = HAR.File("path/to/file.har") # Load HAR file
 
 C = X["header_name"] # Access record by header name
 
-DataFrame(C) # This is implemented for HarParameter types
+DataFrame(C) # This is implemented for HarRecord types
+NamedArray(C) # This is implemented for HarRecord types
 
 HAR.internal_data(X) # List all internal data in the file
 

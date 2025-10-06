@@ -29,3 +29,4 @@ name(x::HarSet) = x.name
 data(x::HarSet) = x.data
 
 DataFrames.DataFrame(x::HarSet) = DataFrames.DataFrame([data(x)], [name(x)])
+NamedArrays.NamedArray(x::HarSet) = NamedArrays.NamedArray(data(x))#, (data(x),), (name(x),))

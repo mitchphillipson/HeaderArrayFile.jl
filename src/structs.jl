@@ -59,7 +59,7 @@ data(x::HarRecord) = x.data
 description(x::HarRecord) = description(metadata(x))
 name(x::HarRecord) = name(header(x))
 DataFrames.DataFrame(x::HarRecord) = DataFrames.DataFrame(data(x))
-
+NamedArrays.NamedArray(x::HarRecord) = NamedArrays.NamedArray(data(x))
 
 struct HarFile
     records::OrderedDict{String, HarRecord}
