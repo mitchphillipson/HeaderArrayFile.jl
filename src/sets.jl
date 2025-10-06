@@ -1,5 +1,14 @@
 abstract type AbstractHarSet <: AbstractHarData end
 
+
+"""
+    HarSet <: AbstractHarSet
+
+A container for a set of strings in a Header Array File. This contains the name
+(if provided, defaults to the description from the metadata) and the data as a vector of strings.
+
+Loads data for `1C` datatype.
+"""
 struct HarSet <: AbstractHarSet
     name::String
     data::Vector{String}
@@ -28,5 +37,20 @@ end
 name(x::HarSet) = x.name
 data(x::HarSet) = x.data
 
-DataFrames.DataFrame(x::HarSet) = DataFrames.DataFrame([data(x)], [name(x)])
-NamedArrays.NamedArray(x::HarSet) = NamedArrays.NamedArray(data(x))#, (data(x),), (name(x),))
+"""
+    DataFrame(x::HarSet)
+
+Convert a `HarSet` to a `DataFrame`. The resulting `DataFrame` will have one column
+for the set values, with the column name `set`
+"""
+DataFrames.DataFrame(x::HarSet) = DataFrames.DataFrame([data(x)], [:set])
+
+""" 
+    NamedArray(x::HarSet)
+
+Convert a `HarSet` to a `NamedArray`. The resulting `NamedArray` will be a 1-dimensional
+array with the name of the set as its dimension name.
+
+The index of this named array will be `1:length(data(x))`.
+"""
+NamedArrays.NamedArray(x::HarSet) = NamedArrays.NamedArray(data(x))

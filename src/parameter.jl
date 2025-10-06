@@ -1,5 +1,14 @@
 abstract type AbstractHarParameter <: AbstractHarData end
 
+"""
+    HarParameter <: AbstractHarParameter
+
+A container for a parameter in a Header Array File. This contains the name 
+(if provided, defaults to the header name), the column names and values, and the 
+data as a vector of (index, value) tuples.
+
+Loads data for `REFULL` and `RESPSE` storage types.
+"""
 struct HarParameter <: AbstractHarParameter
     name::String
     column_names::Vector{Symbol}
@@ -45,7 +54,6 @@ function read_RE_metadata(file::IOStream, metadata::HarMetadata)
     ])
 
     return name, column_names, column_values
-
 end
 
 function read_REFULL_data(file::IOStream, metadata::HarMetadata)
@@ -139,7 +147,12 @@ function make_column_names_unique(column_names::Vector{Symbol})
     return out
 end
 
+"""
+    DataFrame(C::HarParameter)
 
+Convert a `HarParameter` to a `DataFrame`. The resulting `DataFrame` will have 
+one column for each dimension, plus a `:value` column for the data values.
+"""
 function DataFrames.DataFrame(C::HarParameter) 
     cols = make_column_names_unique(column_names(C))
     return DataFrame(C.data, [:index, :value]) |>
@@ -149,6 +162,14 @@ function DataFrames.DataFrame(C::HarParameter)
         x -> select!(x, [cols..., :value])
 end
 
+
+"""
+    NamedArray(C::HarParameter)
+
+Convert a `HarParameter` to a `NamedArray`. The resulting `NamedArray` will have
+one dimension for each dimension in the parameter, with names and sizes taken from
+the parameter metadata.
+"""
 function NamedArrays.NamedArray(C::HarParameter)
     x = C.data
     dim_sizes = dimension_sizes(C)

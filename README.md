@@ -33,6 +33,7 @@ HAR.parameters(X) # List all parameters in the file
 HAR.not_loaded(X) # List all records that are not loaded
 ```
 
+This package does not export any functions or types. This is the purpose of the alias `HAR` in the example above.
 
 ## Currently Implemented Data Types
 
