@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(HeaderArrayFile, :DocTestSetup, :(using HeaderArrayFile); re
 
 
 const _PAGES = [
-    "API Reference" => ["docs.md"],
+    "API Reference" => ["index.md"],
 ]
 
 
