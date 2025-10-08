@@ -16,6 +16,7 @@ end
 
 name(x::HarHeader) = x.name
 Base.isempty(x::HarHeader) = name(x) == ""
+Base.show(io::IO, x::HarHeader) = print(io, name(x))
 
 """
     HarMetadata
@@ -64,6 +65,12 @@ struct HarRecord
     metadata::HarMetadata
     data::AbstractHarData
 end
+
+
+Base.show(io::IO, x::HarRecord) = print(io, 
+    "HarRecord(\"$(description(x))\", $(typeof(data(x))))"
+)
+
 
 """
     header(x::HarRecord)
@@ -136,6 +143,17 @@ Base.values(x::HarFile) = values(records(x))
 Base.length(x::HarFile) = length(records(x))
 Base.iterate(x::HarFile) = iterate(records(x))
 Base.iterate(x::HarFile, state) = iterate(records(x), state)
+
+function Base.show(io::IO, x::HarFile) 
+    println(io, "HarFile with $(length(x)) records:") 
+    for (key, record) in x
+        f(x) = key isa AbstractString ? "\"$x\"" : ":$x"
+        println(io, "  $(f(key)) => $record")
+    end
+
+end
+
+
 
 """
     internal_data(x::HarFile)
