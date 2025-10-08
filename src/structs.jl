@@ -7,9 +7,10 @@ A container for the 4-byte header name of a HAR record.
 """
 struct HarHeader
     name::String
-    function HarHeader(data::Vector{UInt8})  
+    function HarHeader(data::Vector{UInt8}; normalizenames = lowercase)  
         length(data) == 4 || error("Header must be 4 bytes")
-        new(String(data) |> strip)
+
+        new(String(data) |> strip |> normalizenames)
     end
 end
 
@@ -27,11 +28,11 @@ struct HarMetadata
     storage_type::String
     description::String
     dimension_sizes::Vector{Int32}
-    function HarMetadata(data::Vector{UInt8})
+    function HarMetadata(data::Vector{UInt8}; normalizenames = lowercase)
         length(data) >= 80 || error("Metadata must be at least 80 bytes")
 
-        data_type = String(data[1:2]) |> strip
-        storage_type = String(data[3:6]) |> strip
+        data_type = String(data[1:2]) |> strip |> uppercase
+        storage_type = String(data[3:6]) |> strip |> uppercase
         dimension_sizes = reinterpret(Int32, data[81:end]) 
         
         if data_type ∈ ["RE", "RL"]

@@ -1,17 +1,15 @@
 @testitem "Reading Data" begin
-
-
     using DataFrames
     using NamedArrays
 
-    X = HeaderArrayFile.File(joinpath(@__DIR__, "data", "gsdemiss.har"))
+    X = HeaderArrayFile.File(joinpath(@__DIR__, "data", "gsdemiss.har"); normalizenames = lowercase)
 
     FC_data = ["coa", "oil", "gas", "p_c", "gdt"]
     FC_na = NamedArray(FC_data)
     FC_df = DataFrame(set = FC_data)
 
-    @test HeaderArrayFile.NamedArray(X["FC"]) == FC_na
-    @test DataFrame(X["FC"]) == FC_df
+    @test HeaderArrayFile.NamedArray(X["fc"]) == FC_na
+    @test DataFrame(X["fc"]) == FC_df
 
     # Data generated as a random sample from the MIP parameter
     test_mip = [
@@ -37,10 +35,33 @@
         ("coa", "ltu", Float32(0.26090768))
     ]
 
-    na = NamedArray(X["MIP"])
+    na = NamedArray(X["mip"])
 
-    all(na[comm, reg] == val for (comm, reg, val) in test_mip)    
-    
+    all(na[comm, reg] == val for (comm, reg, val) in test_mip)
+
+    df = DataFrame(X["mip"])
+    @test all(
+        only(df[df.fuel_comm .== comm .&& df.reg .== reg, :value]) == val
+        for (comm, reg, val) in test_mip
+    )
+
+
+    ## Same test, uppercase
+
+    X = HeaderArrayFile.File(joinpath(@__DIR__, "data", "gsdemiss.har"); normalizenames = uppercase)
+
+    FC_data = uppercase.(FC_data)
+    FC_na = NamedArray(FC_data)
+    FC_df = DataFrame(set = FC_data)
+
+    @test HeaderArrayFile.NamedArray(X["FC"]) == FC_na
+    @test DataFrame(X["FC"]) == FC_df
+
+    test_mip = [(uppercase(comm), uppercase(reg), val) for (comm, reg, val) in test_mip]
+
+    na = NamedArray(X["MIP"])
+    all(na[comm, reg] == val for (comm, reg, val) in test_mip)
+
     df = DataFrame(X["MIP"])
     @test all(
         only(df[df.FUEL_COMM .== comm .&& df.REG .== reg, :value]) == val
@@ -49,3 +70,4 @@
 
 
 end
+

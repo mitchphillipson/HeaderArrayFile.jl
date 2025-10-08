@@ -15,12 +15,12 @@ struct HarParameter <: AbstractHarParameter
     column_values::NamedTuple
     data::Vector{Tuple{Int, Float32}}
 
-    function HarParameter(file::IOStream, metadata::HarMetadata)
+    function HarParameter(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
 
         if datatype(metadata) == "RE"
-            name, column_names, column_values, data = load_RE_data(file, metadata)
+            name, column_names, column_values, data = load_RE_data(file, metadata; normalizenames = normalizenames)
         elseif datatype(metadata) == "RL"
-            name, column_names, column_values, data = load_RL_data(file, metadata)
+            name, column_names, column_values, data = load_RL_data(file, metadata; normalizenames = normalizenames)
         end
 
         new(name, column_names, column_values, data)
@@ -37,13 +37,13 @@ data(x::HarParameter) = x.data
 
 
 
-function load_RE_data(file::IOStream, metadata::HarMetadata)
-    name, column_names, column_values = read_RE_metadata(file, metadata)
+function load_RE_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    name, column_names, column_values = read_RE_metadata(file, metadata; normalizenames = normalizenames)
 
     if storage_type(metadata) == "FULL"
-        data = read_REFULL_data(file, metadata)
+        data = read_REFULL_data(file, metadata; normalizenames = normalizenames)
     elseif storage_type(metadata) == "SPSE"
-        data = read_RESPSE_data(file, metadata)
+        data = read_RESPSE_data(file, metadata; normalizenames = normalizenames)
     else
         error("Storage type $(storage_type(metadata)) not implemented for RE")
     end
@@ -51,11 +51,11 @@ function load_RE_data(file::IOStream, metadata::HarMetadata)
     return name, column_names, column_values, data
 end
 
-function load_RL_data(file::IOStream, metadata::HarMetadata)
-    name, column_names, column_values = read_RE_metadata(file, metadata)
+function load_RL_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    name, column_names, column_values = read_RE_metadata(file, metadata; normalizenames = normalizenames)
 
     if storage_type(metadata) == "FULL"
-        data = read_RLFULL_data(file, metadata)
+        data = read_RLFULL_data(file, metadata; normalizenames = normalizenames)
     else
         error("Storage type $(storage_type(metadata)) not implemented for RL")
     end
@@ -63,26 +63,26 @@ function load_RL_data(file::IOStream, metadata::HarMetadata)
     return name, column_names, column_values, data
 end
 
-function read_RE_metadata(file::IOStream, metadata::HarMetadata)
+function read_RE_metadata(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
     N = length(dimension_sizes(metadata))
     data_length = 29+12*N-1
 
-    _, M = read_chunk(file)
+    _, M = read_chunk(file; normalizenames = normalizenames)
     length(M) > data_length || error("Parameter metadata data must be at least $data_length bytes")
 
     name = M[13:24] |> String |> strip
-    column_names = M[29:29+12*N-1] |> x -> Iterators.partition(x, 12) .|> String .|> strip .|> Symbol
+    column_names = M[29:29+12*N-1] |> x -> Iterators.partition(x, 12) .|> String .|> strip .|> normalizenames .|> Symbol
     unique_column_names = Tuple(unique(column_names))
     column_values = NamedTuple{unique_column_names}([
-        read_chunk(file) |> x -> Iterators.partition(x[:data][13:end], 12) .|> String .|> strip
+        read_chunk(file) |> x -> Iterators.partition(x[:data][13:end], 12) .|> String .|> strip .|> normalizenames
         for _ in unique_column_names
     ])
 
     return name, column_names, column_values
 end
 
-function read_REFULL_data(file::IOStream, metadata::HarMetadata)
-    _, M = read_chunk(file)
+function read_REFULL_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    _, M = read_chunk(file; normalizenames = normalizenames)
     dims = M[9:end] |> x -> reinterpret(Int32, x) |> x -> filter(!=(1), x)
     dims == dimension_sizes(metadata) || error("Data dimensions do not match metadata") ## Improve error message
     
@@ -102,8 +102,8 @@ function read_REFULL_data(file::IOStream, metadata::HarMetadata)
     return data
 end
 
-function read_RLFULL_data(file::IOStream, metadata::HarMetadata)
-    _, M = read_chunk(file)
+function read_RLFULL_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    _, M = read_chunk(file; normalizenames = normalizenames)
     dims = M[9:end] |> x -> reinterpret(Int32, x) |> x -> filter(!=(1), x)
     dims == dimension_sizes(metadata) || error("Data dimensions do not match metadata") ## Improve error message
 
@@ -122,8 +122,8 @@ function read_RLFULL_data(file::IOStream, metadata::HarMetadata)
     return data
 end
 
-function read_RESPSE_data(file::IOStream, metadata::HarMetadata)
-    _, M = read_chunk(file)
+function read_RESPSE_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    _, M = read_chunk(file; normalizenames = normalizenames)
     #dims = M[9:end] |> x -> reinterpret(Int32, x) |> x -> filter(!=(1), x)
     #dims == dimension_sizes(metadata) || error("Data dimensions do not match metadata") ## Improve error message
 
@@ -194,6 +194,13 @@ Convert a `HarParameter` to a `DataFrame`. The resulting `DataFrame` will have
 one column for each dimension, plus a `:value` column for the data values.
 """
 function DataFrames.DataFrame(C::HarParameter) 
+    dim_sizes = dimension_sizes(C)
+    if isempty(dim_sizes)
+        _,val = only(C.data)
+        return DataFrame(value = [val])
+    end
+
+
     cols = make_column_names_unique(column_names(C))
     return DataFrame(C.data, [:index, :value]) |>
         x -> transform!(x,
