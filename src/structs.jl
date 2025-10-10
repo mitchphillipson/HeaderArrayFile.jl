@@ -162,7 +162,7 @@ Return an `OrderedDict` of all internal data (keys starting with "XX").
 """
 function internal_data(x::HarFile)
     return OrderedDict(
-        key => value for (key, value) in x if startswith(key, "XX")
+        key => value for (key, value) in x if startswith(lowercase(key), "xx")
     )
 end
 
@@ -173,7 +173,7 @@ Return an `OrderedDict` of all sets, or `1C` records.
 """
 function sets(x::HarFile)
     return OrderedDict(
-        key => value for (key, value) in x if !startswith(key, "XX") && isa(data(value), AbstractHarSet)
+        key => value for (key, value) in x if !startswith(lowercase(key), "xx") && isa(data(value), AbstractHarSet)
     )
 
 end
@@ -185,7 +185,7 @@ Return an `OrderedDict` of all parameters, or `RE` records.
 """
 function parameters(x::HarFile)
     return OrderedDict(
-        key => value for (key, value) in x if !startswith(key, "XX") && isa(data(value), AbstractHarParameter)
+        key => value for (key, value) in x if !startswith(lowercase(key), "xx") && isa(data(value), AbstractHarParameter)
     )
 end
 
@@ -200,6 +200,6 @@ Any unsupported datatypes get loaded as `HarDefaultData`.
 """
 function not_loaded(x::HarFile)
     return OrderedDict(
-        key => value for (key, value) in x if !startswith(key, "XX") && isa(data(value), HarDefaultData)
+        key => value for (key, value) in x if !startswith(lowercase(key), "xx") && isa(data(value), HarDefaultData)
     )
 end
