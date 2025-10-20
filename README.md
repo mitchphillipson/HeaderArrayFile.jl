@@ -12,8 +12,8 @@ Pkg.add(url="https://github.com/mitchphillipson/HeaderArray.jl")
 Basic usage example:
 
 ```julia
-using HeaderArrayFiles
-const HAR = HeaderArrayFiles # Create alias for convenience
+using HeaderArrayFile
+const HAR = HeaderArrayFile # Create alias for convenience
 
 using DataFrames
 using NamedArrays
