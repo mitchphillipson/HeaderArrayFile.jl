@@ -5,6 +5,7 @@ module HeaderArrayFile
     using NamedArrays
 
     import OrderedCollections: OrderedDict
+    import StringEncodings: decode
 
     include("structs.jl")
 

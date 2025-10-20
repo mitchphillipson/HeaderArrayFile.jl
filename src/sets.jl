@@ -15,6 +15,8 @@ struct HarSet <: AbstractHarSet
     function HarSet(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
         name = description(metadata)
 
+        #@show name
+
         length(dimension_sizes(metadata)) == 2 || error("Datatype 1C must be 2-dimensional found $(length(dimension_sizes(metadata)))")
 
         num_elements, byte_length = dimension_sizes(metadata)
@@ -22,7 +24,7 @@ struct HarSet <: AbstractHarSet
         data = String[]
         while found_data_points < num_elements
             _, line_data = read_chunk(file; normalizenames = normalizenames)
-            new_data = line_data[13:end] |> y -> Iterators.partition(y, byte_length) .|> String .|> strip .|> normalizenames
+            new_data = line_data[13:end] |> y -> Iterators.partition(y, byte_length) .|> y-> decode(y, "latin2") .|> strip .|> normalizenames
             append!(data, new_data)
             found_data_points += length(new_data)
         end
