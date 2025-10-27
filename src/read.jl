@@ -49,6 +49,8 @@ function File(
             "1C" => HarSet,
             "RE" => HarParameter,
             "RL" => HarParameter,
+            "2I" => HarParameter,
+            "2R" => HarParameter,
             )
         )
 
@@ -64,7 +66,7 @@ function File(
             _, M = read_chunk(file)
             metadata = HarMetadata(M; normalizenames = normalizenames)
             parameter_type = get(parameter_types, datatype(metadata), HarDefaultData)
-            parameter = parameter_type(file, metadata; normalizenames = normalizenames)
+            parameter = parameter_type(file, header, metadata; normalizenames = normalizenames)
             if load_unsupported
                 out[name(header)] = HarRecord(header, metadata, parameter)
             elseif parameter_type != HarDefaultData

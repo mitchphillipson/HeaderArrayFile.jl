@@ -15,12 +15,20 @@ struct HarParameter <: AbstractHarParameter
     column_values::NamedTuple
     data::Vector{Tuple{Int, Float32}}
 
-    function HarParameter(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    function HarParameter(file::IOStream, header::HarHeader, metadata::HarMetadata; normalizenames = lowercase)
 
         if datatype(metadata) == "RE"
             name, column_names, column_values, data = load_RE_data(file, metadata; normalizenames = normalizenames)
         elseif datatype(metadata) == "RL"
             name, column_names, column_values, data = load_RL_data(file, metadata; normalizenames = normalizenames)
+        elseif datatype(metadata) == "2I"
+            name = HeaderArrayFile.name(header)
+            column_names = [:dim1, :dim2]
+            column_values, data = load_2I_data(file, metadata; normalizenames = normalizenames)
+        elseif datatype(metadata) == "2R"
+            name = HeaderArrayFile.name(header)
+            column_names = [:dim1, :dim2]
+            column_values, data = load_2R_data(file, metadata; normalizenames = normalizenames)
         end
 
         new(name, column_names, column_values, data)
@@ -34,8 +42,6 @@ column_values(x::HarParameter) = x.column_values
 column_values(x::HarParameter, col::Symbol) = getfield(column_values(x), col)
 dimension_sizes(x::HarParameter) = length.(column_values.(Ref(x), column_names(x)))
 data(x::HarParameter) = x.data
-
-
 
 function load_RE_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
     name, column_names, column_values = read_RE_metadata(file, metadata; normalizenames = normalizenames)
@@ -154,6 +160,75 @@ function read_RESPSE_data(file::IOStream, metadata::HarMetadata; normalizenames 
     return data
 end
 
+
+## 2I
+
+function load_2I_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+
+    dims = dimension_sizes(metadata)
+    column_values = (dim1 = collect(1:dims[1]), dim2 = collect(1:dims[2]))
+
+    if storage_type(metadata) == "FULL"
+        data = read_2I_data(file, metadata; normalizenames = normalizenames)
+    else
+        error("Storage type $(storage_type(metadata)) not implemented for RE")
+    end
+
+    return column_values, data
+end
+
+function read_2I_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    dims = dimension_sizes(metadata)
+    total_data_points = prod(dims)
+
+    found_data_points = 0
+    data = []
+    while found_data_points < total_data_points
+        _, line_data = read_chunk(file)
+
+        new_data = line_data[7*4+1:end] |> x -> reinterpret(Int32, x)
+
+        append!(data, enumerate(new_data) .|> x -> (x[1]+found_data_points, x[2]))
+        found_data_points += length(new_data)
+    end
+    return data
+end
+
+## 2I
+
+function load_2R_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+
+    dims = dimension_sizes(metadata)
+    column_values = (dim1 = collect(1:dims[1]), dim2 = collect(1:dims[2]))
+
+    if storage_type(metadata) == "FULL"
+        data = read_2R_data(file, metadata; normalizenames = normalizenames)
+    else
+        error("Storage type $(storage_type(metadata)) not implemented for RE")
+    end
+
+    return column_values, data
+end
+
+function read_2R_data(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    dims = dimension_sizes(metadata)
+    total_data_points = prod(dims)
+
+    found_data_points = 0
+    data = []
+    while found_data_points < total_data_points
+        _, line_data = read_chunk(file)
+
+        new_data = line_data[7*4+1:end] |> x -> reinterpret(Float32, x)
+
+        append!(data, enumerate(new_data) .|> x -> (x[1]+found_data_points, x[2]))
+        found_data_points += length(new_data)
+    end
+    return data
+end
+
+
+##
 
 
 function index_to_elements(X::HarParameter, i::Integer)

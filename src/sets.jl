@@ -12,7 +12,7 @@ Loads data for `1C` datatype.
 struct HarSet <: AbstractHarSet
     name::String
     data::Vector{String}
-    function HarSet(file::IOStream, metadata::HarMetadata; normalizenames = lowercase)
+    function HarSet(file::IOStream, header::HarHeader, metadata::HarMetadata; normalizenames = lowercase)
         name = description(metadata)
 
         #@show name
