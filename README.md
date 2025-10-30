@@ -39,6 +39,8 @@ This package does not export any functions or types. This is the purpose of the 
 
 - RL - Stored as `HarParameter` type
 - 1C - Stored as `HarSet` type
+- 2I - Stored as `HarParameter` type
+- 2R - Stored as `HarParameter` type
 
 
 
